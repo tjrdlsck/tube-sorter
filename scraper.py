@@ -93,7 +93,11 @@ def main():
 
     # 2. Initialize API Service
     youtube = build('youtube', 'v3', developerKey=api_key)
-    target_channel_id = "UCmpbmz94SUhirHZFAQrBfMw"
+    target_channel_id = os.getenv("TARGET_CHANNEL_ID")
+
+    if not target_channel_id:
+        print("Error: Please set TARGET_CHANNEL_ID in the .env file.")
+        return
 
     try:
         # 3. Get Uploads Playlist ID
