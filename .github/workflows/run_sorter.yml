@@ -11,6 +11,8 @@ on:
 jobs:
   run-sorter:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # 저장소에 푸시하기 위해 필요한 쓰기 권한
 
     steps:
       - name: Checkout code (Logic)
