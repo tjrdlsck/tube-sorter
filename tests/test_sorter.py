@@ -1,5 +1,6 @@
 import pytest
-from sorter import classify_video, validate_rules
+from storage import validate_rules
+from rule_engine import RuleEngine
 
 def test_validate_rules_success():
     """정상적인 규칙 데이터가 유효성 검사를 통과하는지 테스트"""
@@ -30,13 +31,14 @@ def test_classify_video_match():
     rules_data = {
         "rules": [{"keyword": "새벽"}]
     }
+    engine = RuleEngine(rules_data)
     user_playlists = {
         "2026 새벽예배 리스트": "PL_DAWN_ID",
         "주일예배": "PL_SUNDAY_ID"
     }
     video_title = "2026년 1월 14일 새벽예배 실황"
     
-    playlist_id, keyword = classify_video(video_title, rules_data, user_playlists)
+    playlist_id, keyword = engine.classify_video(video_title, user_playlists)
     
     assert playlist_id == "PL_DAWN_ID"
     assert keyword == "새벽"
@@ -46,10 +48,11 @@ def test_classify_video_no_match():
     rules_data = {
         "rules": [{"keyword": "주일"}]
     }
+    engine = RuleEngine(rules_data)
     user_playlists = {"새벽예배": "PL_DAWN_ID"}
     video_title = "수요기도회 영상"
     
-    playlist_id, keyword = classify_video(video_title, rules_data, user_playlists)
+    playlist_id, keyword = engine.classify_video(video_title, user_playlists)
     
     assert playlist_id is None
     assert keyword is None
@@ -59,10 +62,11 @@ def test_classify_video_keyword_exists_but_no_playlist():
     rules_data = {
         "rules": [{"keyword": "금요"}]
     }
+    engine = RuleEngine(rules_data)
     user_playlists = {"새벽예배": "PL_DAWN_ID"}
     video_title = "금요철야 성령집회"
     
-    playlist_id, keyword = classify_video(video_title, rules_data, user_playlists)
+    playlist_id, keyword = engine.classify_video(video_title, user_playlists)
     
     assert playlist_id is None
     assert keyword is None
@@ -72,13 +76,13 @@ def test_classify_video_whitespace_handling():
     rules_data = {
         "rules": [{"keyword": "주일 2부"}]
     }
+    engine = RuleEngine(rules_data)
     user_playlists = {"2026 주일 2부 예배": "PL_SUNDAY_2_ID"}
     
     # 공백이 다른 경우 (원본: "주일 2부", 제목: "주일2부")
     video_title = "예수산소망교회 주일2부예배(2026.01.11)"
-    playlist_id, keyword = classify_video(video_title, rules_data, user_playlists)
+    playlist_id, keyword = engine.classify_video(video_title, user_playlists)
     
-    # 현재 sorter.py는 단순 'in' 연산을 사용하므로 이 테스트는 실패할 것으로 예상됨
     assert playlist_id == "PL_SUNDAY_2_ID"
     assert keyword == "주일 2부"
 
@@ -87,10 +91,11 @@ def test_classify_video_case_insensitivity():
     rules_data = {
         "rules": [{"keyword": "praise"}]
     }
+    engine = RuleEngine(rules_data)
     user_playlists = {"Praise and Worship": "PL_PRAISE_ID"}
     video_title = "Sunday Morning PRAISE"
     
-    playlist_id, keyword = classify_video(video_title, rules_data, user_playlists)
+    playlist_id, keyword = engine.classify_video(video_title, user_playlists)
     
     assert playlist_id == "PL_PRAISE_ID"
     assert keyword == "praise"
@@ -103,13 +108,14 @@ def test_classify_video_longest_keyword_priority():
             {"keyword": "주일 1부"}
         ]
     }
+    engine = RuleEngine(rules_data)
     user_playlists = {
         "주일예배": "PL_GENERAL_ID",
         "2026 주일 1부 예배": "PL_PART1_ID"
     }
     video_title = "예수산소망교회 주일1부예배"
     
-    playlist_id, keyword = classify_video(video_title, rules_data, user_playlists)
+    playlist_id, keyword = engine.classify_video(video_title, user_playlists)
     
     # 더 구체적인 '주일 1부'가 매칭되어야 함
     assert playlist_id == "PL_PART1_ID"
