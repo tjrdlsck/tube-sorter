@@ -60,3 +60,35 @@ def test_is_video_in_playlist(mock_service):
     # 2. 존재하지 않는 경우
     mock_service.client.playlistItems.return_value.list.return_value.execute.return_value = {'items': []}
     assert mock_service.is_video_in_playlist("VID_NEW", "PL_ID") is False
+
+def test_get_new_videos_pagination(mock_service):
+    """최신 영상 조회 시 페이지네이션이 동작하여 모든 최신 영상을 가져오는지 테스트"""
+    # 마지막 실행 시점
+    last_ts = "2025-01-01T00:00:00Z"
+    
+    # 페이지 1: 모두 최신 영상 (다음 페이지 존재)
+    page1 = {
+        'items': [
+            {'contentDetails': {'videoId': 'v1'}, 'snippet': {'title': 't1', 'publishedAt': '2025-01-03T10:00:00Z'}},
+            {'contentDetails': {'videoId': 'v2'}, 'snippet': {'title': 't2', 'publishedAt': '2025-01-03T09:00:00Z'}}
+        ],
+        'nextPageToken': 'token_page_2'
+    }
+    # 페이지 2: 최신 영상 1개, 과거 영상 1개 (여기서 중단되어야 함, 혹은 다 읽더라도 필터링됨)
+    page2 = {
+        'items': [
+            {'contentDetails': {'videoId': 'v3'}, 'snippet': {'title': 't3', 'publishedAt': '2025-01-02T10:00:00Z'}},
+            {'contentDetails': {'videoId': 'v4'}, 'snippet': {'title': 't4', 'publishedAt': '2024-12-31T23:59:59Z'}} # Old
+        ]
+        # nextPageToken 없음
+    }
+
+    mock_service.client.playlistItems.return_value.list.return_value.execute.side_effect = [page1, page2]
+
+    videos = mock_service.get_new_videos("UU_ID", last_ts)
+    
+    # v1, v2, v3 만 가져와야 함 (v4는 제외)
+    assert len(videos) == 3
+    assert videos[0].id == 'v1'
+    assert videos[1].id == 'v2'
+    assert videos[2].id == 'v3'

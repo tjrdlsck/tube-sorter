@@ -37,22 +37,44 @@ class YouTubeService:
         return response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
 
     def get_new_videos(self, uploads_playlist_id: str, last_published_at: str) -> List[Video]:
-        request = self.client.playlistItems().list(
-            part="snippet,contentDetails",
-            playlistId=uploads_playlist_id,
-            maxResults=20
-        )
-        response = request.execute()
-        
         new_videos = []
-        for item in response.get('items', []):
-            published_at = item['snippet']['publishedAt']
-            if published_at > last_published_at:
-                new_videos.append(Video(
-                    id=item['contentDetails']['videoId'],
-                    title=item['snippet']['title'],
-                    published_at=published_at
-                ))
+        next_page_token = None
+        
+        while True:
+            request = self.client.playlistItems().list(
+                part="snippet,contentDetails",
+                playlistId=uploads_playlist_id,
+                maxResults=50,
+                pageToken=next_page_token
+            )
+            response = request.execute()
+            
+            items = response.get('items', [])
+            if not items:
+                break
+            
+            should_stop = False
+            for item in items:
+                published_at = item['snippet']['publishedAt']
+                if published_at > last_published_at:
+                    new_videos.append(Video(
+                        id=item['contentDetails']['videoId'],
+                        title=item['snippet']['title'],
+                        published_at=published_at
+                    ))
+                else:
+                    # [최적화] 이미 처리한 시점(last_published_at)보다 과거의 영상이 나오면
+                    # 업로드 목록은 최신순 정렬이므로 더 이상 조회할 필요가 없음.
+                    should_stop = True
+                    break
+            
+            if should_stop:
+                break
+
+            next_page_token = response.get('nextPageToken')
+            if not next_page_token:
+                break
+                
         return new_videos
 
     def get_user_playlists(self) -> dict:
@@ -94,11 +116,6 @@ class YouTubeService:
             return False
 
     def add_video_to_playlist(self, video_id: str, playlist_id: str) -> bool:
-        # 중복 체크 먼저 수행
-        if self.is_video_in_playlist(video_id, playlist_id):
-            logger.info(f"Video {video_id} already exists in playlist {playlist_id}. Skipping.")
-            return True
-
         try:
             request = self.client.playlistItems().insert(
                 part="snippet",
