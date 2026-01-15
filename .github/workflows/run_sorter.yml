@@ -11,6 +11,8 @@ on:
 jobs:
   run-sorter:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # 저장소에 푸시하기 위해 필요한 쓰기 권한
 
     steps:
       - name: Checkout code (Logic)
@@ -37,12 +39,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Setup environment
+      - name: Setup environment and secrets
+        env:
+          CLIENT_SECRETS_JSON: ${{ secrets.CLIENT_SECRETS_JSON }}
+          TOKEN_JSON: ${{ secrets.TOKEN_JSON }}
+          ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
-          echo "${{ secrets.CLIENT_SECRETS_JSON }}" > client_secrets.json
-          echo "${{ secrets.TOKEN_JSON }}" > token.json
-          echo "${{ secrets.ENV_FILE }}" > .env
+          # 환경 변수를 통해 안전하게 파일 생성 (echo 대신 printf 또는 env 사용)
+          echo "$CLIENT_SECRETS_JSON" > client_secrets.json
+          echo "$TOKEN_JSON" > token.json
+          echo "$ENV_FILE" > .env
           
+          # 수동 입력값이 있을 경우 .env 오버라이드
           if [ -n "${{ github.event.inputs.max_process_count }}" ]; then
             sed -i "s/^MAX_PROCESS_COUNT=.*/MAX_PROCESS_COUNT=${{ github.event.inputs.max_process_count }}/" .env
           fi
