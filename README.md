@@ -104,7 +104,24 @@ pip install -r requirements.txt
 PYTHONPATH=. pytest
 ```
 
+---
+
+## 📄 저작권 및 라이선스 (Copyright & License)
+
+### 👤 저작권자 (Copyright Holder)
+- **Primary Author**: [tjrdlsck](https://github.com/tjrdlsck)
+- **Copyright**: Copyright (c) 2026 **tjrdlsck**. All rights reserved.
+
+### ⚖️ 라이선스 (License)
+이 프로젝트는 **MIT 라이선스**를 따릅니다. 
+
+본 소프트웨어는 자유롭게 사용, 복제, 수정, 병합, 게시, 배포 및 사본을 판매할 수 있는 권한이 부여됩니다. 단, 모든 소프트웨어 사본에는 상기 **저작권 고지** 및 본 **허용 고지**가 반드시 포함되어야 합니다.
+
+> **면책 조항 (Disclaimer)**: 본 소프트웨어는 "있는 그대로" 제공되며, 어떠한 종류의 보증도 제공하지 않습니다. 저작권자는 본 소프트웨어의 사용으로 인해 발생하는 어떠한 손해에 대해서도 법적 책임을 지지 않습니다.
+
+---
+
 **참고 문헌:**
 - [YouTube Data API v3 Documentation](https://developers.google.com/youtube/v3/docs)
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [Google Cloud Console Help](https://support.google.com/cloud/answer/6158849)
+- [Open Source Initiative - The MIT License](https://opensource.org/licenses/MIT)
