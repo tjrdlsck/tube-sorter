@@ -1,0 +1,24 @@
+{
+  "rules": [
+    {
+      "keyword": "새벽",
+      "description": "새벽예배 관련 영상"
+    },
+    {
+      "keyword": "주일",
+      "description": "주일예배(1부, 2부, 찬양예배) 관련 영상"
+    },
+    {
+      "keyword": "수요",
+      "description": "수요예배 관련 영상"
+    },
+    {
+      "keyword": "금요",
+      "description": "금요철야예배 관련 영상"
+    },
+    {
+      "keyword": "청년",
+      "description": "청년부 예배 관련 영상"
+    }
+  ]
+}

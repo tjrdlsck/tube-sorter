@@ -1,0 +1,66 @@
+name: Tube Sorter Manual Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_process_count:
+        description: 'Number of videos to process (optional, overrides .env)'
+        required: false
+        default: ''
+
+jobs:
+  run-sorter:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code (Logic)
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+
+      - name: Fetch persistent state (Read)
+        run: |
+          # 원격의 state-tracking 브랜치에서 최신 state.json만 가져옴
+          git fetch origin state-tracking || true
+          git checkout origin/state-tracking -- state.json || echo '{"last_published_at": "1970-01-01T00:00:00Z"}' > state.json
+          echo "Current state loaded:"
+          cat state.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Setup environment
+        run: |
+          echo "${{ secrets.CLIENT_SECRETS_JSON }}" > client_secrets.json
+          echo "${{ secrets.TOKEN_JSON }}" > token.json
+          echo "${{ secrets.ENV_FILE }}" > .env
+          
+          if [ -n "${{ github.event.inputs.max_process_count }}" ]; then
+            sed -i "s/^MAX_PROCESS_COUNT=.*/MAX_PROCESS_COUNT=${{ github.event.inputs.max_process_count }}/" .env
+          fi
+
+      - name: Run Sorter
+        run: |
+          PYTHONPATH=. python sorter.py
+
+      - name: Persist state (Write)
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # 임시 브랜치를 만들어 state.json만 포함시킴
+          git checkout --orphan temp-state
+          git rm -rf .
+          git add state.json
+          git commit -m "chore: update state.json [skip ci]"
+          
+          # state-tracking 브랜치로 강제 푸시하여 최신 상태 유지
+          git push origin temp-state:state-tracking --force
