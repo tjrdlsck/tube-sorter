@@ -24,7 +24,7 @@ jobs:
       - name: Checkout code (Logic)
         uses: actions/checkout@v4
         with:
-          ref: develop
+          ref: main
 
       - name: Fetch persistent state (Read)
         run: |
